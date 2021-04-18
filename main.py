@@ -4,10 +4,36 @@ import os, random
 import pygame, sys
 from pygame.locals import *
 
+
 class PlayerModel(pygame.Rect):
     def __init__(self, left, top):
         super().__init__(left, top, 26, 32)
         self.y_momentum = 0
+        self.moving_right = False
+        self.moving_left = False
+        self.air_time = 0
+
+class PlayerController(object):
+    def __init__(self, player: PlayerModel):
+        self.player = player
+
+    def react_to(self, event: pygame.event.Event):
+        if event.type == KEYDOWN:
+            print("keydown")
+            if event.key == K_RIGHT:
+                player.moving_right = True
+            if event.key == K_LEFT:
+                player.moving_left = True
+            if event.key == K_UP:
+                if player.air_time < 6:
+                    #jump_sound.play()
+                    player.y_momentum = -9
+
+        if event.type == KEYUP:
+            if event.key == K_RIGHT:
+                player.moving_right = False
+            if event.key == K_LEFT:
+                player.moving_left = False
 
 
 pygame.mixer.pre_init(44100, -16, 2, 512)
@@ -123,11 +149,8 @@ def move(rect: PlayerModel, movement: Dict, tiles: List[Rect]) -> (Rect, Dict):
     return rect, collision_types
 
 player = PlayerModel(50, 50)
+player_controller = PlayerController(player)
 test_rect = pygame.Rect(100, 100, 100, 50)
-
-moving_right = False
-moving_left = False
-air_time = 0
 
 while True:
     display.fill((146, 244, 255))
@@ -172,9 +195,9 @@ while True:
         y += 1
 
     player_movement = [0,0]
-    if moving_right:
+    if player.moving_right:
         player_movement[0] += 4
-    if moving_left:
+    if player.moving_left:
         player_movement[0] -= 4
     player_movement[1] += player.y_momentum
     player.y_momentum += 0.4
@@ -196,13 +219,13 @@ while True:
 
     if collisions['bottom']:
         player.y_momentum = 0
-        air_time = 0
+        player.air_time = 0
         if player_movement[0] != 0:
             if grass_sound_timer == 0:
                 grass_sound_timer = 30
                 random.choice(grass_sounds).play()
     else:
-        air_time += 1
+        player.air_time += 1
 
     if collisions['top']:
         player.y_momentum = -player.y_momentum
@@ -215,6 +238,7 @@ while True:
     display.blit(pygame.transform.flip(player_image, player_flip, False), (player.x - true_scroll[0], player.y - true_scroll[1]))
 
     for event in pygame.event.get():
+        player_controller.react_to(event)
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
@@ -223,20 +247,6 @@ while True:
                 pygame.mixer.music.fadeout(1000)
             if event.key == K_e:
                 pygame.mixer.music.play(-1)
-            if event.key == K_RIGHT:
-                moving_right = True
-            if event.key == K_LEFT:
-                moving_left = True
-            if event.key == K_UP:
-                if air_time < 6:
-                    jump_sound.play()
-                    player.y_momentum = -9
-
-        if event.type == KEYUP:
-            if event.key == K_RIGHT:
-                moving_right = False
-            if event.key == K_LEFT:
-                moving_left = False
 
     surf = pygame.transform.scale(display, WINDOWS_SIZE)
     screen.blit(surf, (0, 0))
