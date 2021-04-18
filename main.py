@@ -4,6 +4,12 @@ import os, random
 import pygame, sys
 from pygame.locals import *
 
+class PlayerModel(pygame.Rect):
+    def __init__(self, left, top):
+        super().__init__(left, top, 26, 32)
+        self.y_momentum = 0
+
+
 pygame.mixer.pre_init(44100, -16, 2, 512)
 
 
@@ -93,7 +99,7 @@ def collision_test(rect: Rect, tiles: List[Rect]):
     return hit_list
 
 
-def move(rect: Rect, movement: Dict, tiles: List[Rect]) -> (Rect, Dict):
+def move(rect: PlayerModel, movement: Dict, tiles: List[Rect]) -> (Rect, Dict):
     collision_types = {'top': False, 'bottom': False, 'right': False, 'left': False}
     rect.x += movement[0]
     hit_list = collision_test(rect, tiles)
@@ -116,10 +122,7 @@ def move(rect: Rect, movement: Dict, tiles: List[Rect]) -> (Rect, Dict):
 
     return rect, collision_types
 
-
-player_y_momentun = 0
-
-player_rect = pygame.Rect(50, 50, 26, 32)
+player = PlayerModel(50, 50)
 test_rect = pygame.Rect(100, 100, 100, 50)
 
 moving_right = False
@@ -132,8 +135,8 @@ while True:
     if grass_sound_timer > 0:
         grass_sound_timer -= 1
 
-    true_scroll[0] += (player_rect.x - true_scroll[0] - int((display.get_width() / 2)) + int(player_rect.width / 2)) / 20
-    true_scroll[1] += (player_rect.y - true_scroll[1] - int(display.get_height() / 2)) / 20
+    true_scroll[0] += (player.x - true_scroll[0] - int((display.get_width() / 2)) + int(player.width / 2)) / 20
+    true_scroll[1] += (player.y - true_scroll[1] - int(display.get_height() / 2)) / 20
     scroll = true_scroll.copy()
     scroll[0] = int(scroll[0])
     scroll[1] = int(scroll[1])
@@ -173,10 +176,10 @@ while True:
         player_movement[0] += 4
     if moving_left:
         player_movement[0] -= 4
-    player_movement[1] += player_y_momentun
-    player_y_momentun += 0.4
-    if player_y_momentun > 9:
-        player_y_momentun = 9
+    player_movement[1] += player.y_momentum
+    player.y_momentum += 0.4
+    if player.y_momentum > 9:
+        player.y_momentum = 9
 
     if player_movement[0] > 0:
         player_action, player_frame = change_action(player_action, player_frame, 'walk')
@@ -189,10 +192,10 @@ while True:
         player_action, player_frame = change_action(player_action, player_frame, 'walk')
         player_flip = True
 
-    player_rect, collisions = move(player_rect, player_movement, tile_rects)
+    player, collisions = move(player, player_movement, tile_rects)
 
     if collisions['bottom']:
-        player_y_momentun = 0
+        player.y_momentum = 0
         air_time = 0
         if player_movement[0] != 0:
             if grass_sound_timer == 0:
@@ -202,14 +205,14 @@ while True:
         air_time += 1
 
     if collisions['top']:
-        player_y_momentun = -player_y_momentun
+        player.y_momentum = -player.y_momentum
 
     player_frame += 1
     if player_frame >= len(animation_database[player_action]):
         player_frame = 0
     player_img_id = animation_database[player_action][player_frame]
     player_image = animation_frames[player_img_id]
-    display.blit(pygame.transform.flip(player_image, player_flip, False), (player_rect.x - true_scroll[0], player_rect.y - true_scroll[1]))
+    display.blit(pygame.transform.flip(player_image, player_flip, False), (player.x - true_scroll[0], player.y - true_scroll[1]))
 
     for event in pygame.event.get():
         if event.type == QUIT:
@@ -227,7 +230,7 @@ while True:
             if event.key == K_UP:
                 if air_time < 6:
                     jump_sound.play()
-                    player_y_momentun = -9
+                    player.y_momentum = -9
 
         if event.type == KEYUP:
             if event.key == K_RIGHT:
