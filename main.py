@@ -1,11 +1,15 @@
 from typing import List, Dict
-import os
+import os, random
 
 import pygame, sys
 from pygame.locals import *
 
+pygame.mixer.pre_init(44100, -16, 2, 512)
+
+
 clock = pygame.time.Clock()
 pygame.init()
+pygame.mixer.set_num_channels(64)
 pygame.display.set_caption('Pygame window')
 
 WINDOWS_SIZE = (1200, 800)
@@ -18,6 +22,14 @@ grass_image = pygame.image.load('grass.png')
 dirt_image = pygame.image.load('dirt.png')
 r_corner_image = pygame.image.load('right_corner.png')
 l_corner_image = pygame.image.load('left_corner.png')
+
+jump_sound = pygame.mixer.Sound('jump.wav')
+grass_sounds = [pygame.mixer.Sound('grass_0.wav'), pygame.mixer.Sound('grass_1.wav')]
+grass_sounds[0].set_volume(0.2)
+grass_sounds[1].set_volume(0.2)
+
+pygame.mixer.music.load('music.wav')
+pygame.mixer.music.play(-1)
 
 TILE_SIZE = grass_image.get_height()
 
@@ -67,6 +79,8 @@ player_action = 'idle'
 player_frame = 0
 player_flip = False
 
+grass_sound_timer = 0
+
 game_map = load_map('map')
 
 background_objects = [[0.25,[120,20,140,400]],[0.25,[400,120,80,400]],[0.5,[60,80,80,400]],[0.5,[260,180,200,400]],[0.5,[600,160,240,800]]]
@@ -114,6 +128,9 @@ air_time = 0
 
 while True:
     display.fill((146, 244, 255))
+
+    if grass_sound_timer > 0:
+        grass_sound_timer -= 1
 
     true_scroll[0] += (player_rect.x - true_scroll[0] - int((display.get_width() / 2)) + int(player_rect.width / 2)) / 20
     true_scroll[1] += (player_rect.y - true_scroll[1] - int(display.get_height() / 2)) / 20
@@ -177,6 +194,10 @@ while True:
     if collisions['bottom']:
         player_y_momentun = 0
         air_time = 0
+        if player_movement[0] != 0:
+            if grass_sound_timer == 0:
+                grass_sound_timer = 30
+                random.choice(grass_sounds).play()
     else:
         air_time += 1
 
@@ -195,12 +216,17 @@ while True:
             pygame.quit()
             sys.exit()
         if event.type == KEYDOWN:
+            if event.key == K_w:
+                pygame.mixer.music.fadeout(1000)
+            if event.key == K_e:
+                pygame.mixer.music.play(-1)
             if event.key == K_RIGHT:
                 moving_right = True
             if event.key == K_LEFT:
                 moving_left = True
             if event.key == K_UP:
                 if air_time < 6:
+                    jump_sound.play()
                     player_y_momentun = -9
 
         if event.type == KEYUP:
