@@ -12,10 +12,22 @@ class PlayerModel(pygame.Rect):
         self.moving_right = False
         self.moving_left = False
         self.air_time = 0
+        self.movement = [0, 0]
 
 class PlayerController(object):
     def __init__(self, player: PlayerModel):
         self.player = player
+
+    def update(self):
+        player.movement = [0, 0]
+        if player.moving_right:
+            player.movement[0] += 4
+        if player.moving_left:
+            player.movement[0] -= 4
+        player.movement[1] += player.y_momentum
+        player.y_momentum += 0.4
+        if player.y_momentum > 9:
+            player.y_momentum = 9
 
     def react_to(self, event: pygame.event.Event):
         if event.type == KEYDOWN:
@@ -194,33 +206,25 @@ while True:
             x += 1
         y += 1
 
-    player_movement = [0,0]
-    if player.moving_right:
-        player_movement[0] += 4
-    if player.moving_left:
-        player_movement[0] -= 4
-    player_movement[1] += player.y_momentum
-    player.y_momentum += 0.4
-    if player.y_momentum > 9:
-        player.y_momentum = 9
+    player_controller.update()
 
-    if player_movement[0] > 0:
+    if player.movement[0] > 0:
         player_action, player_frame = change_action(player_action, player_frame, 'walk')
         player_flip = False
 
-    if player_movement[0] == 0:
+    if player.movement[0] == 0:
         player_action, player_frame = change_action(player_action, player_frame, 'idle')
 
-    if player_movement[0] < 0:
+    if player.movement[0] < 0:
         player_action, player_frame = change_action(player_action, player_frame, 'walk')
         player_flip = True
 
-    player, collisions = move(player, player_movement, tile_rects)
+    player, collisions = move(player, player.movement, tile_rects)
 
     if collisions['bottom']:
         player.y_momentum = 0
         player.air_time = 0
-        if player_movement[0] != 0:
+        if player.movement[0] != 0:
             if grass_sound_timer == 0:
                 grass_sound_timer = 30
                 random.choice(grass_sounds).play()
