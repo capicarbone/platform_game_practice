@@ -4,6 +4,39 @@ import os, random
 import pygame, sys
 from pygame.locals import *
 
+class Tile(Rect):
+    def __init__(self, left, top, width, height, type: str):
+        super(Tile, self).__init__(left, top, width, height)
+        self.type = type
+
+class SceneryModel(object):
+    def __init__(self, tiles: List[Tile]):
+        self.tiles = tiles
+
+    @staticmethod
+    def from_map_file(path: str, tile_width: int, tile_height: int):
+        f = open(path + '.txt', 'r')
+        data = f.read()
+        f.close()
+        data = data.split('\n')
+        game_map = []
+
+        for row in data:
+            game_map.append(list(row))
+
+        tiles: List[Tile] = []
+        for y in range(len(game_map)):
+            for x in range(len(game_map[y])):
+                if game_map[y][x] != '0':
+                    tiles.append(Tile(x * tile_width, y * tile_height, tile_width, tile_height, game_map[y][x]))
+
+        return SceneryModel(tiles)
+
+
+
+class SceneryController(object):
+    pass
+# TODO: load scenary from file.
 
 class PlayerModel(pygame.Rect):
     def __init__(self, left, top):
@@ -31,7 +64,6 @@ class PlayerController(object):
 
     def react_to(self, event: pygame.event.Event):
         if event.type == KEYDOWN:
-            print("keydown")
             if event.key == K_RIGHT:
                 player.moving_right = True
             if event.key == K_LEFT:
@@ -125,8 +157,6 @@ player_flip = False
 
 grass_sound_timer = 0
 
-game_map = load_map('map')
-
 background_objects = [[0.25,[120,20,140,400]],[0.25,[400,120,80,400]],[0.5,[60,80,80,400]],[0.5,[260,180,200,400]],[0.5,[600,160,240,800]]]
 
 def collision_test(rect: Rect, tiles: List[Rect]):
@@ -137,10 +167,12 @@ def collision_test(rect: Rect, tiles: List[Rect]):
     return hit_list
 
 
-def move(rect: PlayerModel, movement: Dict, tiles: List[Rect]) -> (Rect, Dict):
+def move(rect: PlayerModel, movement: Dict, tiles: List[List[Rect]]) -> (Rect, Dict):
     collision_types = {'top': False, 'bottom': False, 'right': False, 'left': False}
     rect.x += movement[0]
+
     hit_list = collision_test(rect, tiles)
+
     for tile in hit_list:
         if movement[0] > 0:
             rect.right = tile.left
@@ -161,6 +193,7 @@ def move(rect: PlayerModel, movement: Dict, tiles: List[Rect]) -> (Rect, Dict):
     return rect, collision_types
 
 player = PlayerModel(50, 50)
+scenary = SceneryModel.from_map_file('map', TILE_SIZE, TILE_SIZE)
 player_controller = PlayerController(player)
 test_rect = pygame.Rect(100, 100, 100, 50)
 
@@ -186,25 +219,17 @@ while True:
         else:
             pygame.draw.rect(display, (9, 91, 85), obj_rect)
 
-    tile_rects = []
-    y = 0
-    for row in game_map:
-        x = 0
-        for tile in row:
-            tile_position = (x * TILE_SIZE - true_scroll[0], y * TILE_SIZE - true_scroll[1])
-            if tile == '1':
-                display.blit(dirt_image, tile_position)
-            if tile == '2':
-                display.blit(grass_image, tile_position)
-            if tile == '3':
-                display.blit(r_corner_image, tile_position)
-            if tile == '4':
-                display.blit(l_corner_image, tile_position)
-            if tile != '0':
-                tile_rects.append(pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE))
+    for tile in scenary.tiles:
+        tile_position = (tile.left - true_scroll[0], tile.top - true_scroll[1])
+        if tile.type == '1':
+            display.blit(dirt_image, tile_position)
+        if tile.type == '2':
+            display.blit(grass_image, tile_position)
+        if tile.type == '3':
+            display.blit(r_corner_image, tile_position)
+        if tile.type == '4':
+            display.blit(l_corner_image, tile_position)
 
-            x += 1
-        y += 1
 
     player_controller.update()
 
@@ -219,7 +244,7 @@ while True:
         player_action, player_frame = change_action(player_action, player_frame, 'walk')
         player_flip = True
 
-    player, collisions = move(player, player.movement, tile_rects)
+    player, collisions = move(player, player.movement, scenary.tiles)
 
     if collisions['bottom']:
         player.y_momentum = 0
