@@ -32,11 +32,45 @@ class SceneryModel(object):
 
         return SceneryModel(tiles)
 
+class ScenaryView(object):
+    def __init__(self):
+        self.tiles_images = {}
+        self.tiles_images['2'] =  pygame.image.load('grass.png')
+        self.tiles_images['1'] = pygame.image.load('dirt.png')
+        self.tiles_images['3'] = pygame.image.load('right_corner.png')
+        self.tiles_images['4'] = pygame.image.load('left_corner.png')
+
+        self.background_objects = [[0.25,[120,20,140,400]],[0.25,[400,120,80,400]],[0.5,[60,80,80,400]],[0.5,[260,180,200,400]],[0.5,[600,160,240,800]]]
+
+    def render(self, display: pygame.Surface, scenary: SceneryModel, scroll):
+        display.fill((146, 244, 255))
+
+        pygame.draw.rect(display, (7, 80, 75),
+                         pygame.Rect(0, display.get_height() * 0.65, screen.get_width(), display.get_height() * 0.35))
+
+        for background_object in self.background_objects:
+            obj_rect = pygame.Rect(background_object[1][0] - scroll[0] * background_object[0],
+                                   background_object[1][1] - scroll[1] * background_object[0], background_object[1][2],
+                                   background_object[1][3])
+            if background_object[0] == 0.5:
+                pygame.draw.rect(display, (14, 222, 150), obj_rect)
+            else:
+                pygame.draw.rect(display, (9, 91, 85), obj_rect)
+
+
+        for tile in scenary.tiles:
+            tile_position = (tile.left - scroll[0], tile.top - scroll[1])
+            display.blit(self.tiles_images[tile.type], tile_position)
 
 
 class SceneryController(object):
-    pass
-# TODO: load scenary from file.
+    def __init__(self, scenday:SceneryModel, view:ScenaryView):
+        self.scenary = scenery
+        self.view = view
+
+    def draw(self, surface: pygame.Surface, scroll):
+        self.view.render(surface, scenery, scroll)
+
 
 class PlayerModel(pygame.Rect):
     def __init__(self, left, top):
@@ -94,10 +128,7 @@ screen = pygame.display.set_mode(WINDOWS_SIZE, 0, 32)
 
 display = pygame.Surface((600, 400))
 
-grass_image = pygame.image.load('grass.png')
-dirt_image = pygame.image.load('dirt.png')
-r_corner_image = pygame.image.load('right_corner.png')
-l_corner_image = pygame.image.load('left_corner.png')
+
 
 jump_sound = pygame.mixer.Sound('jump.wav')
 grass_sounds = [pygame.mixer.Sound('grass_0.wav'), pygame.mixer.Sound('grass_1.wav')]
@@ -107,7 +138,7 @@ grass_sounds[1].set_volume(0.2)
 pygame.mixer.music.load('music.wav')
 pygame.mixer.music.play(-1)
 
-TILE_SIZE = grass_image.get_height()
+TILE_SIZE = 32
 
 true_scroll = [0, 0]
 
@@ -157,7 +188,7 @@ player_flip = False
 
 grass_sound_timer = 0
 
-background_objects = [[0.25,[120,20,140,400]],[0.25,[400,120,80,400]],[0.5,[60,80,80,400]],[0.5,[260,180,200,400]],[0.5,[600,160,240,800]]]
+
 
 def collision_test(rect: Rect, tiles: List[Rect]):
     hit_list = []
@@ -193,12 +224,13 @@ def move(rect: PlayerModel, movement: Dict, tiles: List[List[Rect]]) -> (Rect, D
     return rect, collision_types
 
 player = PlayerModel(50, 50)
-scenary = SceneryModel.from_map_file('map', TILE_SIZE, TILE_SIZE)
+scenery = SceneryModel.from_map_file('map', TILE_SIZE, TILE_SIZE)
+scenery_controller = SceneryController(scenery, ScenaryView())
 player_controller = PlayerController(player)
 test_rect = pygame.Rect(100, 100, 100, 50)
 
 while True:
-    display.fill((146, 244, 255))
+
 
     if grass_sound_timer > 0:
         grass_sound_timer -= 1
@@ -209,26 +241,8 @@ while True:
     scroll[0] = int(scroll[0])
     scroll[1] = int(scroll[1])
 
-    pygame.draw.rect(display, (7, 80, 75),
-                     pygame.Rect(0, display.get_height() * 0.65, screen.get_width(), display.get_height() * 0.35))
+    scenery_controller.draw(display, true_scroll)
 
-    for background_object in background_objects:
-        obj_rect = pygame.Rect(background_object[1][0]-scroll[0]*background_object[0], background_object[1][1]-scroll[1]*background_object[0], background_object[1][2], background_object[1][3])
-        if background_object[0] == 0.5:
-            pygame.draw.rect(display, (14, 222, 150), obj_rect)
-        else:
-            pygame.draw.rect(display, (9, 91, 85), obj_rect)
-
-    for tile in scenary.tiles:
-        tile_position = (tile.left - true_scroll[0], tile.top - true_scroll[1])
-        if tile.type == '1':
-            display.blit(dirt_image, tile_position)
-        if tile.type == '2':
-            display.blit(grass_image, tile_position)
-        if tile.type == '3':
-            display.blit(r_corner_image, tile_position)
-        if tile.type == '4':
-            display.blit(l_corner_image, tile_position)
 
 
     player_controller.update()
@@ -244,7 +258,7 @@ while True:
         player_action, player_frame = change_action(player_action, player_frame, 'walk')
         player_flip = True
 
-    player, collisions = move(player, player.movement, scenary.tiles)
+    player, collisions = move(player, player.movement, scenery.tiles)
 
     if collisions['bottom']:
         player.y_momentum = 0
