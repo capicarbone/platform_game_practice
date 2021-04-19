@@ -80,10 +80,55 @@ class PlayerModel(pygame.Rect):
         self.moving_left = False
         self.air_time = 0
         self.movement = [0, 0]
+        self.action = 'idle'
+        self.front_to_right = True
+
+
+class PlayerView(object):
+    def __init__(self):
+        self.player_action = 'idle'
+        self.player_frame = 0
+        self.animation_database = {}
+        self.animation_frames = {}
+        self.animation_database['idle'] = self._load_animation('player_animations/idle', [10, 10, 10, 10])
+        self.animation_database['walk'] = self._load_animation('player_animations/walk', [7, 7, 7, 7, 7, 7])
+
+    def _load_animation(self, path, frame_durations):
+
+        animation_name = path.split('/')[-1]
+        animation_frame_data = []
+        n = 1
+        for frame in frame_durations:
+            animation_frame_id = animation_name + '_' + str(n)
+            img_loc = path + '/' + animation_frame_id + '.png'
+            animation_image = pygame.image.load(img_loc)
+            self.animation_frames[animation_frame_id] = animation_image.copy()
+            for i in range(frame):
+                animation_frame_data.append(animation_frame_id)
+            n += 1
+
+        return animation_frame_data
+
+    def _change_action(self, new_value):
+        if self.player_action != new_value:
+            self.player_action = new_value
+            self.player_frame = 0
+
+    def render(self, display: pygame.Surface, player: PlayerModel, scroll: List[int]):
+        self._change_action(player.action)
+        self.player_frame += 1
+        if self.player_frame >= len(self.animation_database[self.player_action]):
+            self.player_frame = 0
+        player_img_id = self.animation_database[self.player_action][self.player_frame]
+        player_image = self.animation_frames[player_img_id]
+        display.blit(pygame.transform.flip(player_image, not player.front_to_right, False),
+                     (player.x - scroll[0], player.y - scroll[1]))
+
 
 class PlayerController(object):
-    def __init__(self, player: PlayerModel):
+    def __init__(self, player: PlayerModel, view: PlayerView):
         self.player = player
+        self.view = view
 
     def update(self):
         player.movement = [0, 0]
@@ -95,6 +140,17 @@ class PlayerController(object):
         player.y_momentum += 0.4
         if player.y_momentum > 9:
             player.y_momentum = 9
+
+        if player.movement[0] > 0:
+            self.player.action = 'walk'
+            player.front_to_right = True
+
+        if player.movement[0] == 0:
+            self.player.action = 'idle'
+
+        if player.movement[0] < 0:
+            self.player.action = 'walk'
+            player.front_to_right = False
 
     def react_to(self, event: pygame.event.Event):
         if event.type == KEYDOWN:
@@ -112,6 +168,9 @@ class PlayerController(object):
                 player.moving_right = False
             if event.key == K_LEFT:
                 player.moving_left = False
+
+    def draw(self, display: pygame.Surface, scroll: List[int]):
+        player_view.render(display, self.player, scroll)
 
 
 pygame.mixer.pre_init(44100, -16, 2, 512)
@@ -141,51 +200,6 @@ pygame.mixer.music.play(-1)
 TILE_SIZE = 32
 
 true_scroll = [0, 0]
-
-def load_map(path):
-    f = open(path + '.txt', 'r')
-    data = f.read()
-    f.close()
-    data = data.split('\n')
-    game_map = []
-    for row in data:
-        game_map.append(list(row))
-
-    return game_map
-
-global animation_frames
-animation_frames = {}
-
-def load_animation(path, frame_durations):
-    global animation_frames
-    animation_name = path.split('/')[-1]
-    animation_frame_data = []
-    n = 1
-    for frame in frame_durations:
-        animation_frame_id = animation_name + '_' + str(n)
-        img_loc = path + '/' + animation_frame_id + '.png'
-        animation_image = pygame.image.load(img_loc)
-        animation_frames[animation_frame_id] = animation_image.copy()
-        for i in range(frame):
-            animation_frame_data.append(animation_frame_id)
-        n += 1
-
-    return animation_frame_data
-
-def change_action(action_var, frame, new_value):
-    if action_var != new_value:
-        action_var = new_value
-        frame = 0
-    return action_var, frame
-
-animation_database = {}
-animation_database['idle'] = load_animation('player_animations/idle', [10, 10, 10, 10])
-animation_database['walk'] = load_animation('player_animations/walk', [7, 7, 7, 7, 7, 7])
-
-player_action = 'idle'
-player_frame = 0
-player_flip = False
-
 grass_sound_timer = 0
 
 
@@ -226,7 +240,8 @@ def move(rect: PlayerModel, movement: Dict, tiles: List[List[Rect]]) -> (Rect, D
 player = PlayerModel(50, 50)
 scenery = SceneryModel.from_map_file('map', TILE_SIZE, TILE_SIZE)
 scenery_controller = SceneryController(scenery, ScenaryView())
-player_controller = PlayerController(player)
+player_view = PlayerView()
+player_controller = PlayerController(player, player_view)
 test_rect = pygame.Rect(100, 100, 100, 50)
 
 while True:
@@ -242,21 +257,7 @@ while True:
     scroll[1] = int(scroll[1])
 
     scenery_controller.draw(display, true_scroll)
-
-
-
     player_controller.update()
-
-    if player.movement[0] > 0:
-        player_action, player_frame = change_action(player_action, player_frame, 'walk')
-        player_flip = False
-
-    if player.movement[0] == 0:
-        player_action, player_frame = change_action(player_action, player_frame, 'idle')
-
-    if player.movement[0] < 0:
-        player_action, player_frame = change_action(player_action, player_frame, 'walk')
-        player_flip = True
 
     player, collisions = move(player, player.movement, scenery.tiles)
 
@@ -273,12 +274,7 @@ while True:
     if collisions['top']:
         player.y_momentum = -player.y_momentum
 
-    player_frame += 1
-    if player_frame >= len(animation_database[player_action]):
-        player_frame = 0
-    player_img_id = animation_database[player_action][player_frame]
-    player_image = animation_frames[player_img_id]
-    display.blit(pygame.transform.flip(player_image, player_flip, False), (player.x - true_scroll[0], player.y - true_scroll[1]))
+    player_controller.draw(display, true_scroll)
 
     for event in pygame.event.get():
         player_controller.react_to(event)
