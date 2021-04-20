@@ -1,8 +1,21 @@
-from typing import List, Dict
+from typing import List, Dict, Tuple
 import os, random
 
 import pygame, sys
 from pygame.locals import *
+
+def collision_test(rect: Rect, tiles: List[Rect]):
+    hit_list = []
+    for tile in tiles:
+        if rect.colliderect(tile):
+            hit_list.append(tile)
+    return hit_list
+
+
+class CameraModel():
+    def __init__(self):
+        self.x_offset = 0
+        self.y_offset = 0
 
 class Tile(Rect):
     def __init__(self, left, top, width, height, type: str):
@@ -126,9 +139,10 @@ class PlayerView(object):
 
 
 class PlayerController(object):
-    def __init__(self, player: PlayerModel, view: PlayerView):
+    def __init__(self, player: PlayerModel, scenery: SceneryModel, view: PlayerView):
         self.player = player
         self.view = view
+        self.scenery = scenery
 
     def update(self):
         player.movement = [0, 0]
@@ -151,6 +165,46 @@ class PlayerController(object):
         if player.movement[0] < 0:
             self.player.action = 'walk'
             player.front_to_right = False
+
+        collisions = self._move(player.movement)
+
+        if collisions['bottom']:
+            player.y_momentum = 0
+            player.air_time = 0
+            #if player.movement[0] != 0:
+            #    if grass_sound_timer == 0:
+            #        grass_sound_timer = 30
+            #        random.choice(grass_sounds).play()
+        else:
+            player.air_time += 1
+
+        if collisions['top']:
+            player.y_momentum = -player.y_momentum
+
+    def _move(self, movement: Tuple) -> (Rect, Dict):
+        collision_types = {'top': False, 'bottom': False, 'right': False, 'left': False}
+        self.player.x += movement[0]
+
+        hit_list = collision_test(self.player, self.scenery.tiles)
+
+        for tile in hit_list:
+            if movement[0] > 0:
+                self.player.right = tile.left
+                collision_types['right'] = True
+            elif movement[0] < 0:
+                self.player.left = tile.right
+                collision_types['left'] = True
+        self.player.y += movement[1]
+        hit_list = collision_test(self.player, self.scenery.tiles)
+        for tile in hit_list:
+            if movement[1] > 0:
+                self.player.bottom = tile.top
+                collision_types['bottom'] = True
+            elif movement[1] < 0:
+                self.player.top = tile.bottom
+                collision_types['top'] = True
+
+        return collision_types
 
     def react_to(self, event: pygame.event.Event):
         if event.type == KEYDOWN:
@@ -203,45 +257,11 @@ true_scroll = [0, 0]
 grass_sound_timer = 0
 
 
-
-def collision_test(rect: Rect, tiles: List[Rect]):
-    hit_list = []
-    for tile in tiles:
-        if rect.colliderect(tile):
-            hit_list.append(tile)
-    return hit_list
-
-
-def move(rect: PlayerModel, movement: Dict, tiles: List[List[Rect]]) -> (Rect, Dict):
-    collision_types = {'top': False, 'bottom': False, 'right': False, 'left': False}
-    rect.x += movement[0]
-
-    hit_list = collision_test(rect, tiles)
-
-    for tile in hit_list:
-        if movement[0] > 0:
-            rect.right = tile.left
-            collision_types['right'] = True
-        elif movement[0] < 0:
-            rect.left = tile.right
-            collision_types['left'] = True
-    rect.y += movement[1]
-    hit_list = collision_test(rect, tiles)
-    for tile in hit_list:
-        if movement[1] > 0:
-            rect.bottom = tile.top
-            collision_types['bottom'] = True
-        elif movement[1] < 0:
-            rect.top = tile.bottom
-            collision_types['top'] = True
-
-    return rect, collision_types
-
 player = PlayerModel(50, 50)
 scenery = SceneryModel.from_map_file('map', TILE_SIZE, TILE_SIZE)
 scenery_controller = SceneryController(scenery, ScenaryView())
 player_view = PlayerView()
-player_controller = PlayerController(player, player_view)
+player_controller = PlayerController(player, scenery, player_view)
 test_rect = pygame.Rect(100, 100, 100, 50)
 
 while True:
@@ -256,25 +276,9 @@ while True:
     scroll[0] = int(scroll[0])
     scroll[1] = int(scroll[1])
 
-    scenery_controller.draw(display, true_scroll)
+    scenery_controller.draw(display, scroll)
     player_controller.update()
-
-    player, collisions = move(player, player.movement, scenery.tiles)
-
-    if collisions['bottom']:
-        player.y_momentum = 0
-        player.air_time = 0
-        if player.movement[0] != 0:
-            if grass_sound_timer == 0:
-                grass_sound_timer = 30
-                random.choice(grass_sounds).play()
-    else:
-        player.air_time += 1
-
-    if collisions['top']:
-        player.y_momentum = -player.y_momentum
-
-    player_controller.draw(display, true_scroll)
+    player_controller.draw(display, scroll)
 
     for event in pygame.event.get():
         player_controller.react_to(event)
