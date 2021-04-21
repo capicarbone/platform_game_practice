@@ -1,8 +1,10 @@
 from typing import List, Dict, Tuple
-import os, random
+from collections import  namedtuple
 
 import pygame, sys
 from pygame.locals import *
+
+Point = namedtuple('Point', ['x', 'y'])
 
 def collision_test(rect: Rect, tiles: List[Rect]):
     hit_list = []
@@ -12,10 +14,25 @@ def collision_test(rect: Rect, tiles: List[Rect]):
     return hit_list
 
 
-class CameraModel():
-    def __init__(self):
+class CameraModel(object):
+    def __init__(self, width: int, height: int, following: Rect):
         self.x_offset = 0
         self.y_offset = 0
+        self.width = width
+        self.height = height
+        self.following = following
+
+class CameraController(object):
+    def __init__(self, camera: CameraModel):
+        self.camera = camera
+
+    def update(self):
+        self.camera.x_offset += (self.camera.following.x - self.camera.x_offset - int((self.camera.width / 2)) + int(self.camera.following.width / 2)) / 20
+        self.camera.y_offset += (self.camera.following.y - self.camera.y_offset - int(self.camera.height / 2)) / 20
+
+
+    def get_camera_position(self):
+        return Point(int(self.camera.x_offset), int(self.camera.y_offset))
 
 class Tile(Rect):
     def __init__(self, left, top, width, height, type: str):
@@ -81,7 +98,7 @@ class SceneryController(object):
         self.scenary = scenery
         self.view = view
 
-    def draw(self, surface: pygame.Surface, scroll):
+    def draw(self, surface: pygame.Surface, scroll: Point):
         self.view.render(surface, scenery, scroll)
 
 
@@ -92,7 +109,6 @@ class PlayerModel(pygame.Rect):
         self.moving_right = False
         self.moving_left = False
         self.air_time = 0
-        self.movement = [0, 0]
         self.action = 'idle'
         self.front_to_right = True
 
@@ -127,7 +143,7 @@ class PlayerView(object):
             self.player_action = new_value
             self.player_frame = 0
 
-    def render(self, display: pygame.Surface, player: PlayerModel, scroll: List[int]):
+    def render(self, display: pygame.Surface, player: PlayerModel, scroll: Point):
         self._change_action(player.action)
         self.player_frame += 1
         if self.player_frame >= len(self.animation_database[self.player_action]):
@@ -145,33 +161,33 @@ class PlayerController(object):
         self.scenery = scenery
 
     def update(self):
-        player.movement = [0, 0]
+        movement = [0, 0]
         if player.moving_right:
-            player.movement[0] += 4
+            movement[0] += 4
         if player.moving_left:
-            player.movement[0] -= 4
-        player.movement[1] += player.y_momentum
+            movement[0] -= 4
+        movement[1] += player.y_momentum
         player.y_momentum += 0.4
         if player.y_momentum > 9:
             player.y_momentum = 9
 
-        if player.movement[0] > 0:
+        if movement[0] > 0:
             self.player.action = 'walk'
             player.front_to_right = True
 
-        if player.movement[0] == 0:
+        if movement[0] == 0:
             self.player.action = 'idle'
 
-        if player.movement[0] < 0:
+        if movement[0] < 0:
             self.player.action = 'walk'
             player.front_to_right = False
 
-        collisions = self._move(player.movement)
+        collisions = self._move(movement)
 
         if collisions['bottom']:
             player.y_momentum = 0
             player.air_time = 0
-            #if player.movement[0] != 0:
+            #if movement[0] != 0:
             #    if grass_sound_timer == 0:
             #        grass_sound_timer = 30
             #        random.choice(grass_sounds).play()
@@ -181,7 +197,7 @@ class PlayerController(object):
         if collisions['top']:
             player.y_momentum = -player.y_momentum
 
-    def _move(self, movement: Tuple) -> (Rect, Dict):
+    def _move(self, movement: List[int]) -> (Rect, Dict):
         collision_types = {'top': False, 'bottom': False, 'right': False, 'left': False}
         self.player.x += movement[0]
 
@@ -223,7 +239,7 @@ class PlayerController(object):
             if event.key == K_LEFT:
                 player.moving_left = False
 
-    def draw(self, display: pygame.Surface, scroll: List[int]):
+    def draw(self, display: pygame.Surface, scroll: Point):
         player_view.render(display, self.player, scroll)
 
 
@@ -262,23 +278,21 @@ scenery = SceneryModel.from_map_file('map', TILE_SIZE, TILE_SIZE)
 scenery_controller = SceneryController(scenery, ScenaryView())
 player_view = PlayerView()
 player_controller = PlayerController(player, scenery, player_view)
-test_rect = pygame.Rect(100, 100, 100, 50)
+
+camera = CameraModel(width=display.get_width(), height=display.get_height(), following=player)
+camera_controller = CameraController(camera)
 
 while True:
-
 
     if grass_sound_timer > 0:
         grass_sound_timer -= 1
 
-    true_scroll[0] += (player.x - true_scroll[0] - int((display.get_width() / 2)) + int(player.width / 2)) / 20
-    true_scroll[1] += (player.y - true_scroll[1] - int(display.get_height() / 2)) / 20
-    scroll = true_scroll.copy()
-    scroll[0] = int(scroll[0])
-    scroll[1] = int(scroll[1])
-
-    scenery_controller.draw(display, scroll)
     player_controller.update()
-    player_controller.draw(display, scroll)
+    camera_controller.update()
+
+    camera_position = camera_controller.get_camera_position()
+    scenery_controller.draw(display, camera_position)
+    player_controller.draw(display, camera_position)
 
     for event in pygame.event.get():
         player_controller.react_to(event)
