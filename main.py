@@ -1,10 +1,12 @@
-from typing import List, Dict, Tuple
-from collections import  namedtuple
+import random
+from typing import List, Dict
+from collections import namedtuple
 
 import pygame, sys
 from pygame.locals import *
 
 Point = namedtuple('Point', ['x', 'y'])
+
 
 def collision_test(rect: Rect, tiles: List[Rect]):
     hit_list = []
@@ -22,22 +24,25 @@ class CameraModel(object):
         self.height = height
         self.following = following
 
+
 class CameraController(object):
     def __init__(self, camera: CameraModel):
         self.camera = camera
 
     def update(self):
-        self.camera.x_offset += (self.camera.following.x - self.camera.x_offset - int((self.camera.width / 2)) + int(self.camera.following.width / 2)) / 20
+        self.camera.x_offset += (self.camera.following.x - self.camera.x_offset - int((self.camera.width / 2)) + int(
+            self.camera.following.width / 2)) / 20
         self.camera.y_offset += (self.camera.following.y - self.camera.y_offset - int(self.camera.height / 2)) / 20
-
 
     def get_camera_position(self):
         return Point(int(self.camera.x_offset), int(self.camera.y_offset))
+
 
 class Tile(Rect):
     def __init__(self, left, top, width, height, type: str):
         super(Tile, self).__init__(left, top, width, height)
         self.type = type
+
 
 class SceneryModel(object):
     def __init__(self, tiles: List[Tile]):
@@ -62,15 +67,19 @@ class SceneryModel(object):
 
         return SceneryModel(tiles)
 
+
 class ScenaryView(object):
     def __init__(self):
         self.tiles_images = {}
-        self.tiles_images['2'] =  pygame.image.load('grass.png')
+        self.tiles_images['2'] = pygame.image.load('grass.png')
         self.tiles_images['1'] = pygame.image.load('dirt.png')
         self.tiles_images['3'] = pygame.image.load('right_corner.png')
         self.tiles_images['4'] = pygame.image.load('left_corner.png')
 
-        self.background_objects = [[0.25,[120,20,140,400]],[0.25,[400,120,80,400]],[0.5,[60,80,80,400]],[0.5,[260,180,200,400]],[0.5,[600,160,240,800]]]
+        self.background_objects = [[0.25, [120, 20, 140, 400]], [0.25, [400, 120, 80, 400]], [0.5, [60, 80, 80, 400]],
+                                   [0.5, [260, 180, 200, 400]], [0.5, [600, 160, 240, 800]]]
+
+
 
     def render(self, display: pygame.Surface, scenary: SceneryModel, scroll):
         display.fill((146, 244, 255))
@@ -87,19 +96,29 @@ class ScenaryView(object):
             else:
                 pygame.draw.rect(display, (9, 91, 85), obj_rect)
 
-
         for tile in scenary.tiles:
             tile_position = (tile.left - scroll[0], tile.top - scroll[1])
             display.blit(self.tiles_images[tile.type], tile_position)
 
 
+
 class SceneryController(object):
-    def __init__(self, scenday:SceneryModel, view:ScenaryView):
+    def __init__(self, scenday: SceneryModel, view: ScenaryView):
         self.scenary = scenery
         self.view = view
 
+        pygame.mixer.music.load('music.wav')
+        pygame.mixer.music.play(-1)
+
     def draw(self, surface: pygame.Surface, scroll: Point):
         self.view.render(surface, scenery, scroll)
+
+    def react_to(self, event: pygame.event.Event):
+        if event.type == KEYDOWN:
+            if event.key == K_w:
+                pygame.mixer.music.fadeout(1000)
+            if event.key == K_e:
+                pygame.mixer.music.play(-1)
 
 
 class PlayerModel(pygame.Rect):
@@ -159,8 +178,20 @@ class PlayerController(object):
         self.player = player
         self.view = view
         self.scenery = scenery
+        self.grass_sound_timer = 0
+        self._load_sounds()
+
+    def _load_sounds(self):
+        self.jump_sound = pygame.mixer.Sound('jump.wav')
+        self.grass_sounds = [pygame.mixer.Sound('grass_0.wav'), pygame.mixer.Sound('grass_1.wav')]
+        self.grass_sounds[0].set_volume(0.2)
+        self.grass_sounds[1].set_volume(0.2)
 
     def update(self):
+
+        if self.grass_sound_timer > 0:
+            self.grass_sound_timer -= 1
+
         movement = [0, 0]
         if player.moving_right:
             movement[0] += 4
@@ -187,10 +218,10 @@ class PlayerController(object):
         if collisions['bottom']:
             player.y_momentum = 0
             player.air_time = 0
-            #if movement[0] != 0:
-            #    if grass_sound_timer == 0:
-            #        grass_sound_timer = 30
-            #        random.choice(grass_sounds).play()
+            if movement[0] != 0:
+                if self.grass_sound_timer == 0:
+                    self.grass_sound_timer = 30
+                    random.choice(self.grass_sounds).play()
         else:
             player.air_time += 1
 
@@ -230,7 +261,7 @@ class PlayerController(object):
                 player.moving_left = True
             if event.key == K_UP:
                 if player.air_time < 6:
-                    #jump_sound.play()
+                    self.jump_sound.play()
                     player.y_momentum = -9
 
         if event.type == KEYUP:
@@ -245,7 +276,6 @@ class PlayerController(object):
 
 pygame.mixer.pre_init(44100, -16, 2, 512)
 
-
 clock = pygame.time.Clock()
 pygame.init()
 pygame.mixer.set_num_channels(64)
@@ -259,18 +289,9 @@ display = pygame.Surface((600, 400))
 
 
 
-jump_sound = pygame.mixer.Sound('jump.wav')
-grass_sounds = [pygame.mixer.Sound('grass_0.wav'), pygame.mixer.Sound('grass_1.wav')]
-grass_sounds[0].set_volume(0.2)
-grass_sounds[1].set_volume(0.2)
-
-pygame.mixer.music.load('music.wav')
-pygame.mixer.music.play(-1)
 
 TILE_SIZE = 32
 
-true_scroll = [0, 0]
-grass_sound_timer = 0
 
 
 player = PlayerModel(50, 50)
@@ -284,8 +305,7 @@ camera_controller = CameraController(camera)
 
 while True:
 
-    if grass_sound_timer > 0:
-        grass_sound_timer -= 1
+
 
     player_controller.update()
     camera_controller.update()
@@ -299,11 +319,7 @@ while True:
         if event.type == QUIT:
             pygame.quit()
             sys.exit()
-        if event.type == KEYDOWN:
-            if event.key == K_w:
-                pygame.mixer.music.fadeout(1000)
-            if event.key == K_e:
-                pygame.mixer.music.play(-1)
+
 
     surf = pygame.transform.scale(display, WINDOWS_SIZE)
     screen.blit(surf, (0, 0))
