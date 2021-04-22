@@ -1,5 +1,5 @@
 import random
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from collections import namedtuple
 
 import pygame, sys
@@ -16,6 +16,17 @@ def collision_test(rect: Rect, tiles: List[Rect]):
     return hit_list
 
 
+class Controller(object):
+    def reacto_to(self, event: pygame.event.Event):
+        pass
+
+    def update(self):
+        pass
+
+    def draw(self, display: pygame.Surface, scroll: Point):
+        pass
+
+
 class CameraModel(object):
     def __init__(self, width: int, height: int, following: Rect):
         self.x_offset = 0
@@ -25,7 +36,7 @@ class CameraModel(object):
         self.following = following
 
 
-class CameraController(object):
+class CameraController(Controller):
     def __init__(self, camera: CameraModel):
         self.camera = camera
 
@@ -85,7 +96,7 @@ class ScenaryView(object):
         display.fill((146, 244, 255))
 
         pygame.draw.rect(display, (7, 80, 75),
-                         pygame.Rect(0, display.get_height() * 0.65, screen.get_width(), display.get_height() * 0.35))
+                         pygame.Rect(0, display.get_height() * 0.65, display.get_width(), display.get_height() * 0.35))
 
         for background_object in self.background_objects:
             obj_rect = pygame.Rect(background_object[1][0] - scroll[0] * background_object[0],
@@ -102,16 +113,19 @@ class ScenaryView(object):
 
 
 
-class SceneryController(object):
-    def __init__(self, scenday: SceneryModel, view: ScenaryView):
+class SceneryController(Controller):
+    def __init__(self, scenery: SceneryModel, view: ScenaryView):
         self.scenary = scenery
         self.view = view
 
         pygame.mixer.music.load('music.wav')
         pygame.mixer.music.play(-1)
 
+    def update(self):
+        pass
+
     def draw(self, surface: pygame.Surface, scroll: Point):
-        self.view.render(surface, scenery, scroll)
+        self.view.render(surface, self.scenery, scroll)
 
     def react_to(self, event: pygame.event.Event):
         if event.type == KEYDOWN:
@@ -122,8 +136,8 @@ class SceneryController(object):
 
 
 class PlayerModel(pygame.Rect):
-    def __init__(self, left, top):
-        super().__init__(left, top, 26, 32)
+    def __init__(self, star_position: Tuple[int, int]):
+        super().__init__(star_position[0], star_position[1], 26, 32)
         self.y_momentum = 0
         self.moving_right = False
         self.moving_left = False
@@ -173,7 +187,7 @@ class PlayerView(object):
                      (player.x - scroll[0], player.y - scroll[1]))
 
 
-class PlayerController(object):
+class PlayerController(Controller):
     def __init__(self, player: PlayerModel, scenery: SceneryModel, view: PlayerView):
         self.player = player
         self.view = view
@@ -193,40 +207,40 @@ class PlayerController(object):
             self.grass_sound_timer -= 1
 
         movement = [0, 0]
-        if player.moving_right:
+        if self.player.moving_right:
             movement[0] += 4
-        if player.moving_left:
+        if self.player.moving_left:
             movement[0] -= 4
-        movement[1] += player.y_momentum
-        player.y_momentum += 0.4
-        if player.y_momentum > 9:
-            player.y_momentum = 9
+        movement[1] += self.player.y_momentum
+        self.player.y_momentum += 0.4
+        if self.player.y_momentum > 9:
+            self.player.y_momentum = 9
 
         if movement[0] > 0:
             self.player.action = 'walk'
-            player.front_to_right = True
+            self.player.front_to_right = True
 
         if movement[0] == 0:
             self.player.action = 'idle'
 
         if movement[0] < 0:
             self.player.action = 'walk'
-            player.front_to_right = False
+            self.player.front_to_right = False
 
         collisions = self._move(movement)
 
         if collisions['bottom']:
-            player.y_momentum = 0
-            player.air_time = 0
+            self.player.y_momentum = 0
+            self.player.air_time = 0
             if movement[0] != 0:
                 if self.grass_sound_timer == 0:
                     self.grass_sound_timer = 30
                     random.choice(self.grass_sounds).play()
         else:
-            player.air_time += 1
+            self.player.air_time += 1
 
         if collisions['top']:
-            player.y_momentum = -player.y_momentum
+            self.player.y_momentum = -self.player.y_momentum
 
     def _move(self, movement: List[int]) -> (Rect, Dict):
         collision_types = {'top': False, 'bottom': False, 'right': False, 'left': False}
@@ -256,72 +270,97 @@ class PlayerController(object):
     def react_to(self, event: pygame.event.Event):
         if event.type == KEYDOWN:
             if event.key == K_RIGHT:
-                player.moving_right = True
+                self.player.moving_right = True
             if event.key == K_LEFT:
-                player.moving_left = True
+                self.player.moving_left = True
             if event.key == K_UP:
-                if player.air_time < 6:
+                if self.player.air_time < 6:
                     self.jump_sound.play()
-                    player.y_momentum = -9
+                    self.player.y_momentum = -9
 
         if event.type == KEYUP:
             if event.key == K_RIGHT:
-                player.moving_right = False
+                self.player.moving_right = False
             if event.key == K_LEFT:
-                player.moving_left = False
+                self.player.moving_left = False
 
     def draw(self, display: pygame.Surface, scroll: Point):
-        player_view.render(display, self.player, scroll)
-
-
-pygame.mixer.pre_init(44100, -16, 2, 512)
-
-clock = pygame.time.Clock()
-pygame.init()
-pygame.mixer.set_num_channels(64)
-pygame.display.set_caption('Pygame window')
-
-WINDOWS_SIZE = (1200, 800)
-
-screen = pygame.display.set_mode(WINDOWS_SIZE, 0, 32)
-
-display = pygame.Surface((600, 400))
-
-
-
+        self.player_view.render(display, self.player, scroll)
 
 TILE_SIZE = 32
+WINDOWS_SIZE = (1200, 800)
+
+class Game(object):
+    def __init__(self):
+        pygame.init()
+
+        self.screen = pygame.display.set_mode(WINDOWS_SIZE, 0, 32)
+        self.display = pygame.Surface((600, 400))
+        pygame.display.set_caption('Pygame window')
+
+        pygame.mixer.pre_init(44100, -16, 2, 512)
+        pygame.mixer.set_num_channels(64)
+
+        self._init_objects()
+
+
+    def _init_objects(self) -> List[Controller]:
+
+        player = PlayerModel((50, 50))
+        scenery = SceneryModel.from_map_file('map', TILE_SIZE, TILE_SIZE)
+        scenery_controller = SceneryController(scenery, ScenaryView())
+        player_view = PlayerView()
+
+        player_controller = PlayerController(player, scenery, player_view)
+
+        camera = CameraModel(width=self.display.get_width(), height=self.display.get_height(), following=player)
+        camera_controller = CameraController(camera)
+
+        self.controllers: List[Controller] = [camera_controller, scenery_controller, player_controller]
+        self.camera = camera_controller
+
+    def _update(self):
+        for controller in self.controllers:
+            controller.update()
+
+    def _render(self):
+        camera_position = self.camera.get_camera_position()
+        for controller in self.controllers:
+            controller.draw(self.display, camera_position)
+
+    def _process_event(self, event: pygame.event.Event):
+        for controller in self.controllers:
+            controller.reacto_to(event)
+
+    def run(self):
+        clock = pygame.time.Clock()
+        while True:
+            self._update()
+
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+                else:
+                    self._process_event(event)
+
+            surf = pygame.transform.scale(self.display, WINDOWS_SIZE)
+            self.screen.blit(surf, (0, 0))
+            pygame.display.update()
+            clock.tick(60)
+
+if __name__ == "__main__":
+    Game().run()
 
 
 
-player = PlayerModel(50, 50)
-scenery = SceneryModel.from_map_file('map', TILE_SIZE, TILE_SIZE)
-scenery_controller = SceneryController(scenery, ScenaryView())
-player_view = PlayerView()
-player_controller = PlayerController(player, scenery, player_view)
-
-camera = CameraModel(width=display.get_width(), height=display.get_height(), following=player)
-camera_controller = CameraController(camera)
-
-while True:
 
 
 
-    player_controller.update()
-    camera_controller.update()
-
-    camera_position = camera_controller.get_camera_position()
-    scenery_controller.draw(display, camera_position)
-    player_controller.draw(display, camera_position)
-
-    for event in pygame.event.get():
-        player_controller.react_to(event)
-        if event.type == QUIT:
-            pygame.quit()
-            sys.exit()
 
 
-    surf = pygame.transform.scale(display, WINDOWS_SIZE)
-    screen.blit(surf, (0, 0))
-    pygame.display.update()
-    clock.tick(60)
+
+
+
+
+
