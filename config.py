@@ -1,0 +1,2 @@
+
+ASSETS_FOLDER = 'assets/'
