@@ -4,6 +4,9 @@ from collections import namedtuple
 
 import pygame, sys
 from pygame.locals import *
+from models import *
+
+ASSETS_FOLDER = 'assets/'
 
 Point = namedtuple('Point', ['x', 'y'])
 
@@ -27,13 +30,7 @@ class Controller(object):
         pass
 
 
-class CameraModel(object):
-    def __init__(self, width: int, height: int, following: Rect):
-        self.x_offset = 0
-        self.y_offset = 0
-        self.width = width
-        self.height = height
-        self.following = following
+
 
 
 class CameraController(Controller):
@@ -49,43 +46,18 @@ class CameraController(Controller):
         return Point(int(self.camera.x_offset), int(self.camera.y_offset))
 
 
-class Tile(Rect):
-    def __init__(self, left, top, width, height, type: str):
-        super(Tile, self).__init__(left, top, width, height)
-        self.type = type
 
 
-class SceneryModel(object):
-    def __init__(self, tiles: List[Tile]):
-        self.tiles = tiles
 
-    @staticmethod
-    def from_map_file(path: str, tile_width: int, tile_height: int):
-        f = open(path + '.txt', 'r')
-        data = f.read()
-        f.close()
-        data = data.split('\n')
-        game_map = []
-
-        for row in data:
-            game_map.append(list(row))
-
-        tiles: List[Tile] = []
-        for y in range(len(game_map)):
-            for x in range(len(game_map[y])):
-                if game_map[y][x] != '0':
-                    tiles.append(Tile(x * tile_width, y * tile_height, tile_width, tile_height, game_map[y][x]))
-
-        return SceneryModel(tiles)
 
 
 class ScenaryView(object):
     def __init__(self):
         self.tiles_images = {}
-        self.tiles_images['2'] = pygame.image.load('grass.png')
-        self.tiles_images['1'] = pygame.image.load('dirt.png')
-        self.tiles_images['3'] = pygame.image.load('right_corner.png')
-        self.tiles_images['4'] = pygame.image.load('left_corner.png')
+        self.tiles_images['2'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass.png')
+        self.tiles_images['1'] = pygame.image.load(ASSETS_FOLDER + 'tiles/dirt.png')
+        self.tiles_images['3'] = pygame.image.load(ASSETS_FOLDER + 'tiles/right_corner.png')
+        self.tiles_images['4'] = pygame.image.load(ASSETS_FOLDER + 'tiles/left_corner.png')
 
         self.background_objects = [[0.25, [120, 20, 140, 400]], [0.25, [400, 120, 80, 400]], [0.5, [60, 80, 80, 400]],
                                    [0.5, [260, 180, 200, 400]], [0.5, [600, 160, 240, 800]]]
@@ -118,7 +90,7 @@ class SceneryController(Controller):
         self.scenery = scenery
         self.view = view
 
-        pygame.mixer.music.load('music.wav')
+        pygame.mixer.music.load(ASSETS_FOLDER + 'music/music.wav')
         pygame.mixer.music.play(-1)
 
     def update(self):
@@ -135,15 +107,6 @@ class SceneryController(Controller):
                 pygame.mixer.music.play(-1)
 
 
-class PlayerModel(pygame.Rect):
-    def __init__(self, star_position: Tuple[int, int]):
-        super().__init__(star_position[0], star_position[1], 26, 32)
-        self.y_momentum = 0
-        self.moving_right = False
-        self.moving_left = False
-        self.air_time = 0
-        self.action = 'idle'
-        self.front_to_right = True
 
 
 class PlayerView(object):
@@ -152,8 +115,8 @@ class PlayerView(object):
         self.player_frame = 0
         self.animation_database = {}
         self.animation_frames = {}
-        self.animation_database['idle'] = self._load_animation('player_animations/idle', [10, 10, 10, 10])
-        self.animation_database['walk'] = self._load_animation('player_animations/walk', [7, 7, 7, 7, 7, 7])
+        self.animation_database['idle'] = self._load_animation(ASSETS_FOLDER + 'characters/player/idle', [10, 10, 10, 10])
+        self.animation_database['walk'] = self._load_animation(ASSETS_FOLDER + 'characters/player/walk', [7, 7, 7, 7, 7, 7])
 
     def _load_animation(self, path, frame_durations):
 
@@ -196,8 +159,9 @@ class PlayerController(Controller):
         self._load_sounds()
 
     def _load_sounds(self):
-        self.jump_sound = pygame.mixer.Sound('jump.wav')
-        self.grass_sounds = [pygame.mixer.Sound('grass_0.wav'), pygame.mixer.Sound('grass_1.wav')]
+        self.jump_sound = pygame.mixer.Sound(ASSETS_FOLDER + 'sounds/jump.wav')
+        self.grass_sounds = [pygame.mixer.Sound(ASSETS_FOLDER + 'sounds/grass_0.wav'),
+                             pygame.mixer.Sound(ASSETS_FOLDER + 'sounds/grass_1.wav')]
         self.grass_sounds[0].set_volume(0.2)
         self.grass_sounds[1].set_volume(0.2)
 
@@ -335,8 +299,6 @@ class Game(object):
     def run(self):
         clock = pygame.time.Clock()
         while True:
-            self._update()
-            self._render()
 
             for event in pygame.event.get():
                 if event.type == QUIT:
@@ -344,6 +306,9 @@ class Game(object):
                     sys.exit()
                 else:
                     self._process_event(event)
+
+            self._update()
+            self._render()
 
             surf = pygame.transform.scale(self.display, WINDOWS_SIZE)
             self.screen.blit(surf, (0, 0))
