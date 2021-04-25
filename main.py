@@ -17,7 +17,7 @@ def collision_test(rect: Rect, tiles: List[Rect]):
 
 
 class Controller(object):
-    def reacto_to(self, event: pygame.event.Event):
+    def react_to(self, event: pygame.event.Event):
         pass
 
     def update(self):
@@ -115,7 +115,7 @@ class ScenaryView(object):
 
 class SceneryController(Controller):
     def __init__(self, scenery: SceneryModel, view: ScenaryView):
-        self.scenary = scenery
+        self.scenery = scenery
         self.view = view
 
         pygame.mixer.music.load('music.wav')
@@ -285,7 +285,7 @@ class PlayerController(Controller):
                 self.player.moving_left = False
 
     def draw(self, display: pygame.Surface, scroll: Point):
-        self.player_view.render(display, self.player, scroll)
+        self.view.render(display, self.player, scroll)
 
 TILE_SIZE = 32
 WINDOWS_SIZE = (1200, 800)
@@ -330,12 +330,13 @@ class Game(object):
 
     def _process_event(self, event: pygame.event.Event):
         for controller in self.controllers:
-            controller.reacto_to(event)
+            controller.react_to(event)
 
     def run(self):
         clock = pygame.time.Clock()
         while True:
             self._update()
+            self._render()
 
             for event in pygame.event.get():
                 if event.type == QUIT:
