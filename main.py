@@ -29,7 +29,7 @@ class Game(object):
 
         player = PlayerModel((50, 50))
         scenery = SceneryModel.from_map_file('map', TILE_SIZE, TILE_SIZE)
-        scenery_controller = SceneryController(scenery, SceneryView())
+        scenery_controller = SceneryController(scenery, SceneryView(), False)
         player_view = PlayerView()
 
         player_controller = PlayerController(player, scenery, player_view)
