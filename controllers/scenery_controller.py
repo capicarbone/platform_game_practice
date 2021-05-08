@@ -9,12 +9,13 @@ from views import SceneryView
 
 
 class SceneryController(Controller):
-    def __init__(self, scenery: SceneryModel, view: SceneryView):
+    def __init__(self, scenery: SceneryModel, view: SceneryView, music = True):
         self.scenery = scenery
         self.view = view
 
-        pygame.mixer.music.load(ASSETS_FOLDER + 'music/music.wav')
-        pygame.mixer.music.play(-1)
+        if music:
+            pygame.mixer.music.load(ASSETS_FOLDER + 'music/music.wav')
+            pygame.mixer.music.play(-1)
 
     def update(self):
         pass
