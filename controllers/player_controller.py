@@ -9,6 +9,8 @@ from engine.utils import collision_test, Point
 from models import PlayerModel, SceneryModel, PlayerActions
 from views import PlayerView
 
+ATTACK_FRAMES = 30
+
 class PlayerController(Controller):
     def __init__(self, player: PlayerModel, scenery: SceneryModel, view: PlayerView):
         self.player = player
@@ -29,26 +31,31 @@ class PlayerController(Controller):
         if self.grass_sound_timer > 0:
             self.grass_sound_timer -= 1
 
+
         movement = [0, 0]
-        if self.player.moving_right:
-            movement[0] += 4
-        if self.player.moving_left:
-            movement[0] -= 4
-        movement[1] += self.player.y_momentum
-        self.player.y_momentum += 0.4
-        if self.player.y_momentum > 9:
-            self.player.y_momentum = 9
 
-        if movement[0] > 0:
-            self.player.action = PlayerActions.WALK
-            self.player.front_to_right = True
+        if self.player.action == PlayerActions.ATTACK and self.player.action_frame != ATTACK_FRAMES:
+            self.player.action_frame += 1
+        else:
+            if self.player.moving_right:
+                movement[0] += 4
+            if self.player.moving_left:
+                movement[0] -= 4
+            movement[1] += self.player.y_momentum
+            self.player.y_momentum += 0.4
+            if self.player.y_momentum > 9:
+                self.player.y_momentum = 9
 
-        if movement[0] < 0:
-            self.player.action = PlayerActions.WALK
-            self.player.front_to_right = False
+            if movement[0] > 0:
+                self.player.action = PlayerActions.WALK
+                self.player.front_to_right = True
 
-        if movement[0] == 0 and movement[1] == 0:
-            self.player.action = PlayerActions.IDLE
+            if movement[0] < 0:
+                self.player.action = PlayerActions.WALK
+                self.player.front_to_right = False
+
+            if movement[0] == 0 and movement[1] == 0:
+                self.player.action = PlayerActions.IDLE
 
         collisions = self._move(movement)
 
@@ -98,6 +105,8 @@ class PlayerController(Controller):
 
     def react_to(self, event: pygame.event.Event):
         if event.type == KEYDOWN:
+            if event.key == K_SPACE:
+                self.player.start_attack()
             if event.key == K_RIGHT:
                 self.player.moving_right = True
             if event.key == K_LEFT:

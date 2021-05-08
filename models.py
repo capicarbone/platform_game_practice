@@ -8,6 +8,7 @@ class PlayerActions(Enum):
     WALK = auto()
     JUMP = auto()
     FALL = auto()
+    ATTACK = auto()
 
 
 class PlayerModel(pygame.Rect):
@@ -19,6 +20,11 @@ class PlayerModel(pygame.Rect):
         self.air_time = 0
         self.action = PlayerActions.IDLE
         self.front_to_right = True
+        self.action_frame = 0
+
+    def start_attack(self):
+        self.action_frame = 1
+        self.action = PlayerActions.ATTACK
 
 class Tile(pygame.Rect):
     def __init__(self, left, top, width, height, type: str):

@@ -14,6 +14,7 @@ class PlayerView(object):
         self.animation_database[PlayerActions.WALK] = self._load_animation(ASSETS_FOLDER + 'characters/player/walk', [7, 7, 7, 7, 7, 7])
         self.animation_database[PlayerActions.JUMP] = self._load_animation(ASSETS_FOLDER + 'characters/player/jump', [5, 5, 7, 7])
         self.animation_database[PlayerActions.FALL] = self._load_animation(ASSETS_FOLDER + 'characters/player/fall', [7])
+        self.animation_database[PlayerActions.ATTACK] = self._load_animation(ASSETS_FOLDER + 'characters/player/attack', [int(30/6)]*6)
 
     def _load_animation(self, path, frame_durations):
 
