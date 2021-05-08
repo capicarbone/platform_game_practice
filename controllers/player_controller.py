@@ -43,12 +43,12 @@ class PlayerController(Controller):
             self.player.action = 'walk'
             self.player.front_to_right = True
 
-        if movement[0] == 0:
-            self.player.action = 'idle'
-
         if movement[0] < 0:
             self.player.action = 'walk'
             self.player.front_to_right = False
+
+        if movement[0] == 0 and movement[1] == 0:
+            self.player.action = 'idle'
 
         collisions = self._move(movement)
 
@@ -61,6 +61,12 @@ class PlayerController(Controller):
                     random.choice(self.grass_sounds).play()
         else:
             self.player.air_time += 1
+
+        if movement[1] < 0:
+            self.player.action = 'jump'
+
+        if movement[1] >= 1 and not collisions['bottom']:
+            self.player.action = 'fall'
 
         if collisions['top']:
             self.player.y_momentum = -self.player.y_momentum
