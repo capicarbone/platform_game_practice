@@ -37,9 +37,11 @@ class PlayerView(object):
     def render(self, display: pygame.Surface, player: PlayerModel, scroll: Point):
         self._change_action(player.action)
         self.player_frame += 1
-        if self.player_frame >= len(self.animation_database[self.player_action]):
+
+        if self.player_frame >= len(self.animation_database[player.action]):
             self.player_frame = 0
-        player_img_id = self.animation_database[self.player_action][self.player_frame]
+
+        player_img_id = self.animation_database[player.action][self.player_frame]
         player_image = self.animation_frames[player_img_id]
         display.blit(pygame.transform.flip(player_image, not player.front_to_right, False),
                      (player.x - scroll[0], player.y - scroll[1]))
