@@ -1,6 +1,14 @@
 from typing import Tuple, List
 
 import pygame
+from enum import Enum, auto
+
+class PlayerActions(Enum):
+    IDLE = auto()
+    WALK = auto()
+    JUMP = auto()
+    FALL = auto()
+
 
 class PlayerModel(pygame.Rect):
     def __init__(self, star_position: Tuple[int, int]):
@@ -9,7 +17,7 @@ class PlayerModel(pygame.Rect):
         self.moving_right = False
         self.moving_left = False
         self.air_time = 0
-        self.action = 'idle'
+        self.action = PlayerActions.IDLE
         self.front_to_right = True
 
 class Tile(pygame.Rect):

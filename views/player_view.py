@@ -2,18 +2,18 @@
 from config import ASSETS_FOLDER
 import pygame
 from engine.utils import Point
-from models import PlayerModel
+from models import PlayerModel, PlayerActions
 
 class PlayerView(object):
     def __init__(self):
-        self.player_action = 'idle'
+        self.player_action = PlayerActions.IDLE
         self.player_frame = 0
         self.animation_database = {}
         self.animation_frames = {}
-        self.animation_database['idle'] = self._load_animation(ASSETS_FOLDER + 'characters/player/idle', [10, 10, 10, 10])
-        self.animation_database['walk'] = self._load_animation(ASSETS_FOLDER + 'characters/player/walk', [7, 7, 7, 7, 7, 7])
-        self.animation_database['jump'] = self._load_animation(ASSETS_FOLDER + 'characters/player/jump', [5, 5, 7, 7])
-        self.animation_database['fall'] = self._load_animation(ASSETS_FOLDER + 'characters/player/fall', [7])
+        self.animation_database[PlayerActions.IDLE] = self._load_animation(ASSETS_FOLDER + 'characters/player/idle', [10, 10, 10, 10])
+        self.animation_database[PlayerActions.WALK] = self._load_animation(ASSETS_FOLDER + 'characters/player/walk', [7, 7, 7, 7, 7, 7])
+        self.animation_database[PlayerActions.JUMP] = self._load_animation(ASSETS_FOLDER + 'characters/player/jump', [5, 5, 7, 7])
+        self.animation_database[PlayerActions.FALL] = self._load_animation(ASSETS_FOLDER + 'characters/player/fall', [7])
 
     def _load_animation(self, path, frame_durations):
 

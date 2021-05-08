@@ -6,7 +6,7 @@ from pygame.locals import *
 from config import ASSETS_FOLDER
 from engine import Controller
 from engine.utils import collision_test, Point
-from models import PlayerModel, SceneryModel
+from models import PlayerModel, SceneryModel, PlayerActions
 from views import PlayerView
 
 class PlayerController(Controller):
@@ -40,15 +40,15 @@ class PlayerController(Controller):
             self.player.y_momentum = 9
 
         if movement[0] > 0:
-            self.player.action = 'walk'
+            self.player.action = PlayerActions.WALK
             self.player.front_to_right = True
 
         if movement[0] < 0:
-            self.player.action = 'walk'
+            self.player.action = PlayerActions.WALK
             self.player.front_to_right = False
 
         if movement[0] == 0 and movement[1] == 0:
-            self.player.action = 'idle'
+            self.player.action = PlayerActions.IDLE
 
         collisions = self._move(movement)
 
@@ -63,10 +63,10 @@ class PlayerController(Controller):
             self.player.air_time += 1
 
         if movement[1] < 0:
-            self.player.action = 'jump'
+            self.player.action = PlayerActions.JUMP
 
         if movement[1] >= 1 and not collisions['bottom']:
-            self.player.action = 'fall'
+            self.player.action = PlayerActions.FALL
 
         if collisions['top']:
             self.player.y_momentum = -self.player.y_momentum
