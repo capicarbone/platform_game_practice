@@ -104,7 +104,7 @@ class PlayerController(Controller):
 
     def react_to(self, event: pygame.event.Event):
         if event.type == KEYDOWN:
-            if event.key == K_SPACE:
+            if event.key == K_x:
                 if self.player.action is not PlayerActions.JUMP and self.player.action is not PlayerActions.FALL:
                     self.player.start_attack()
             if event.key == K_RIGHT:
