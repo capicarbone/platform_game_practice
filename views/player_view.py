@@ -6,8 +6,8 @@ from pygame import Surface
 from engine.utils import Point
 from models import PlayerModel, PlayerActions
 
-class PlayerView(object):
 
+class PlayerView(object):
     _DEFAULT_PLAYER_SIZE = 32
 
     def __init__(self):
@@ -15,11 +15,16 @@ class PlayerView(object):
         self.player_frame = 0
         self.animation_database = {}
         self.animation_frames: Dict[str, Surface] = {}
-        self.animation_database[PlayerActions.IDLE] = self._load_animation(ASSETS_FOLDER + 'characters/player/idle', [10, 10, 10, 10])
-        self.animation_database[PlayerActions.WALK] = self._load_animation(ASSETS_FOLDER + 'characters/player/walk', [7, 7, 7, 7, 7, 7])
-        self.animation_database[PlayerActions.JUMP] = self._load_animation(ASSETS_FOLDER + 'characters/player/jump', [5, 5, 7, 7])
-        self.animation_database[PlayerActions.FALL] = self._load_animation(ASSETS_FOLDER + 'characters/player/fall', [7])
-        self.animation_database[PlayerActions.ATTACK] = self._load_animation(ASSETS_FOLDER + 'characters/player/attack', [int(30/6)]*6)
+        self.animation_database[PlayerActions.IDLE] = self._load_animation(ASSETS_FOLDER + 'characters/player/idle',
+                                                                           [10, 10, 10, 10])
+        self.animation_database[PlayerActions.WALK] = self._load_animation(ASSETS_FOLDER + 'characters/player/walk',
+                                                                           [7, 7, 7, 7, 7, 7])
+        self.animation_database[PlayerActions.JUMP] = self._load_animation(ASSETS_FOLDER + 'characters/player/jump',
+                                                                           [5, 5, 7, 7])
+        self.animation_database[PlayerActions.FALL] = self._load_animation(ASSETS_FOLDER + 'characters/player/fall',
+                                                                           [7])
+        self.animation_database[PlayerActions.ATTACK] = self._load_animation(ASSETS_FOLDER + 'characters/player/attack',
+                                                                             [int(25 / 6)] * 6)
 
     def _load_animation(self, path, frame_durations):
 
@@ -53,7 +58,7 @@ class PlayerView(object):
         player_image = self.animation_frames[player_img_id]
 
         # Sprites like those for jump action have height greater than 32, so we adjust wht height
-        position_adjustment = player_image.get_height() - self._DEFAULT_PLAYER_SIZE
+        height_adjustment = player_image.get_height() - self._DEFAULT_PLAYER_SIZE
 
         display.blit(pygame.transform.flip(player_image, not player.front_to_right, False),
-                     (player.x - scroll[0], player.y - scroll[1] - position_adjustment))
+                     (player.x - scroll[0], player.y - scroll[1] - height_adjustment))

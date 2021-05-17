@@ -8,10 +8,11 @@ from engine.utils import collision_test, Point
 from models import PlayerModel, SceneryModel, PlayerActions
 from views import PlayerView
 
-ATTACK_FRAMES = 30
-
+# TODO move to a dict of actions : frames durations
+ATTACK_FRAMES = 25
 
 class PlayerController(Controller):
+
     def __init__(self, player: PlayerModel, scenery: SceneryModel, view: PlayerView):
         self.player = player
         self.view = view
@@ -36,6 +37,8 @@ class PlayerController(Controller):
         if self.player.action == PlayerActions.ATTACK and self.player.action_frame != ATTACK_FRAMES:
             self.player.action_frame += 1
         else:
+            # TODO on jump action, on the transtion to fall action there is a frame when we
+            # can see a idle sprinte
             if self.player.moving_right:
                 movement[0] += 4
             if self.player.moving_left:
