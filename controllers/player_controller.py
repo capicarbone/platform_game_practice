@@ -1,4 +1,3 @@
-
 from typing import List, Dict
 import random
 import pygame
@@ -10,6 +9,7 @@ from models import PlayerModel, SceneryModel, PlayerActions
 from views import PlayerView
 
 ATTACK_FRAMES = 30
+
 
 class PlayerController(Controller):
     def __init__(self, player: PlayerModel, scenery: SceneryModel, view: PlayerView):
@@ -30,7 +30,6 @@ class PlayerController(Controller):
 
         if self.grass_sound_timer > 0:
             self.grass_sound_timer -= 1
-
 
         movement = [0, 0]
 
@@ -106,7 +105,7 @@ class PlayerController(Controller):
     def react_to(self, event: pygame.event.Event):
         if event.type == KEYDOWN:
             if event.key == K_SPACE:
-                if self.player.action is not PlayerActions.JUMP:
+                if self.player.action is not PlayerActions.JUMP and self.player.action is not PlayerActions.FALL:
                     self.player.start_attack()
             if event.key == K_RIGHT:
                 self.player.moving_right = True
