@@ -37,8 +37,7 @@ class PlayerController(Controller):
         if self.player.action == PlayerActions.ATTACK and self.player.action_frame != ATTACK_FRAMES:
             self.player.action_frame += 1
         else:
-            # TODO on jump action, on the transtion to fall action there is a frame when we
-            # can see a idle sprinte
+
             if self.player.moving_right:
                 movement[0] += 4
             if self.player.moving_left:
@@ -48,21 +47,14 @@ class PlayerController(Controller):
             if self.player.y_momentum > 9:
                 self.player.y_momentum = 9
 
-            if movement[0] > 0:
-                self.player.action = PlayerActions.WALK
-                self.player.front_to_right = True
-
-            if movement[0] < 0:
-                self.player.action = PlayerActions.WALK
-                self.player.front_to_right = False
-
-            if movement[0] == 0 and movement[1] == 0:
-                self.player.action = PlayerActions.IDLE
-
         collisions = self._move(movement)
 
         if collisions['bottom']:
-            self.player.y_momentum = 0
+            """
+            Yes, our player will be constantly "falling" but we rely on
+            collissions detection to know if we are actually falling.
+            """
+            self.player.y_momentum = 0.4
             self.player.air_time = 0
             if movement[0] != 0:
                 if self.grass_sound_timer == 0:
@@ -71,10 +63,22 @@ class PlayerController(Controller):
         else:
             self.player.air_time += 1
 
+
+        if movement[0] > 0:
+            self.player.action = PlayerActions.WALK
+            self.player.front_to_right = True
+
+        if movement[0] < 0:
+            self.player.action = PlayerActions.WALK
+            self.player.front_to_right = False
+
+        if movement[0] == 0 and collisions['bottom']:
+            self.player.action = PlayerActions.IDLE
+
         if movement[1] < 0:
             self.player.action = PlayerActions.JUMP
 
-        if movement[1] >= 1 and not collisions['bottom']:
+        if movement[1] >= 0 and not collisions['bottom']:
             self.player.action = PlayerActions.FALL
 
         if collisions['top']:
@@ -93,7 +97,10 @@ class PlayerController(Controller):
             elif movement[0] < 0:
                 self.player.left = tile.right
                 collision_types['left'] = True
-        self.player.y += movement[1]
+
+        # We should take small y movements has potential collisions
+        y_movement = 1 if 0 < movement[1] < 1 else movement[1]
+        self.player.y += y_movement
         hit_list = collision_test(self.player, self.scenery.tiles)
         for tile in hit_list:
             if movement[1] > 0:
