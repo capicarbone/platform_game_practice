@@ -78,7 +78,7 @@ class PlayerController(Controller):
         if movement[1] < 0:
             self.player.action = PlayerActions.JUMP
 
-        if movement[1] >= 0 and not collisions['bottom']:
+        if movement[1] >= 0 and not collisions['bottom'] and self.player.action != PlayerActions.ATTACK:
             self.player.action = PlayerActions.FALL
 
         if collisions['top']:
