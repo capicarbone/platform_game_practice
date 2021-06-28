@@ -8,7 +8,8 @@ from models import PlayerModel, PlayerActions
 
 
 class PlayerView(object):
-    _DEFAULT_PLAYER_SIZE = 32
+    _DEFAULT_PLAYER_HEIGHT = 32
+    _DEFAULT_PLAYER_WIDTH = 26
 
     def __init__(self):
         self.displaying_action = PlayerActions.IDLE
@@ -58,7 +59,10 @@ class PlayerView(object):
         player_image = self.animation_frames[player_img_id]
 
         # Sprites like those for jump action have height greater than 32, so we adjust wht height
-        height_adjustment = player_image.get_height() - self._DEFAULT_PLAYER_SIZE
+        y_adjustment = player_image.get_height() - self._DEFAULT_PLAYER_HEIGHT
+        x_adjustment = 0
+        if not player.front_to_right:
+            x_adjustment = player_image.get_width() - self._DEFAULT_PLAYER_WIDTH
 
         display.blit(pygame.transform.flip(player_image, not player.front_to_right, False),
-                     (player.x - scroll[0], player.y - scroll[1] - height_adjustment))
+                     (player.x - scroll[0] - x_adjustment, player.y - scroll[1] - y_adjustment))
