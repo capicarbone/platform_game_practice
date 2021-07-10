@@ -14,6 +14,7 @@ class SceneryView(object):
         self.background_objects = [[0.25, [120, 20, 140, 400]], [0.25, [400, 120, 80, 400]], [0.5, [60, 80, 80, 400]],
                                    [0.5, [260, 180, 200, 400]], [0.5, [600, 160, 240, 800]]]
 
+
     def render(self, display: pygame.Surface, scenary: SceneryModel, scroll):
         display.fill((146, 244, 255))
 
