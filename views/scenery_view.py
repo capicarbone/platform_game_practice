@@ -8,8 +8,18 @@ class SceneryView(object):
         self.tiles_images = {}
         self.tiles_images['2'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass.png')
         self.tiles_images['1'] = pygame.image.load(ASSETS_FOLDER + 'tiles/dirt.png')
-        self.tiles_images['3'] = pygame.image.load(ASSETS_FOLDER + 'tiles/right_corner.png')
-        self.tiles_images['4'] = pygame.image.load(ASSETS_FOLDER + 'tiles/left_corner.png')
+        self.tiles_images['3'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass_right_corner.png')
+        self.tiles_images['4'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass_left_corner.png')
+        self.tiles_images['5'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass_left.png')
+        self.tiles_images['8'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass_right.png')
+        self.tiles_images['9'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass_bottom.png')
+        self.tiles_images['10'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass_bottom_top.png')
+        self.tiles_images['11'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass_right_border.png')
+        self.tiles_images['12'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass_left_border.png')
+        self.tiles_images['13'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass_bottom_border.png')
+        self.tiles_images['14'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass_left_right.png')
+        self.tiles_images['6'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass_left_bottom_corner.png')
+        self.tiles_images['7'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass_right_bottom_corner.png')
 
         self.background_objects = [[0.25, [120, 20, 140, 400]], [0.25, [400, 120, 80, 400]], [0.5, [60, 80, 80, 400]],
                                    [0.5, [260, 180, 200, 400]], [0.5, [600, 160, 240, 800]]]

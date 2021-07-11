@@ -43,10 +43,23 @@ class SceneryModel(object):
         map_height = len(game_map)
         map_width = len(game_map[0])
 
-        top_free = y_position - 1 >= 0 and game_map[y_position - 1][x_position] == '0'
-        bottom_free = y_position + 1 < map_height and game_map[y_position + 1][x_position] == '0'
-        left_free = x_position - 1 >= 0 and game_map[y_position][x_position - 1] == '0'
-        right_free = x_position + 1 < map_width and game_map[y_position][x_position + 1] == '0'
+        top_free = y_position - 1 < 0 or game_map[y_position - 1][x_position] == '0'
+        bottom_free = y_position + 1 >= map_height or game_map[y_position + 1][x_position] == '0'
+        left_free = x_position - 1 < 0 or game_map[y_position][x_position - 1] == '0'
+        right_free = x_position + 1 >= map_width or game_map[y_position][x_position + 1] == '0'
+
+        if left_free and right_free:
+            if bottom_free:
+                return '13'
+            return '14'
+
+        if bottom_free and top_free:
+            if right_free:
+                return '11'
+            if left_free:
+                return '12'
+
+            return '10'
 
         if top_free:
             if right_free:
@@ -56,6 +69,20 @@ class SceneryModel(object):
                 return '4'
 
             return '2'
+
+        if bottom_free:
+            if left_free:
+                return '6'
+            if right_free:
+                return '7'
+
+            return '9'
+
+        if left_free:
+            return '5'
+
+        if right_free:
+            return '8'
 
         return '1'
 
