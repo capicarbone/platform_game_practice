@@ -18,6 +18,10 @@ class SceneryView(object):
         self.tiles_images['12'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass_left_border.png')
         self.tiles_images['13'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass_bottom_border.png')
         self.tiles_images['14'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass_left_right.png')
+        self.tiles_images['15'] = pygame.image.load(ASSETS_FOLDER + 'tiles/tile_15.png')
+        self.tiles_images['16'] = pygame.transform.flip(self.tiles_images['15'], True, False)
+        self.tiles_images['17'] = pygame.transform.flip(self.tiles_images['15'], False, True)
+        self.tiles_images['18'] = pygame.transform.flip(self.tiles_images['16'], False, True)
         self.tiles_images['6'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass_left_bottom_corner.png')
         self.tiles_images['7'] = pygame.image.load(ASSETS_FOLDER + 'tiles/grass_right_bottom_corner.png')
 
