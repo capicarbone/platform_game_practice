@@ -48,7 +48,6 @@ class SceneryModel(object):
         left_free = x_position - 1 < 0 or game_map[y_position][x_position - 1] == '0'
         right_free = x_position + 1 >= map_width or game_map[y_position][x_position + 1] == '0'
 
-        # TODO Not working
         top_left_free = y_position - 1 >= 0 and x_position - 1 >= 0 and game_map[y_position - 1][x_position - 1] == '0'
         top_right_free = y_position - 1 >= 0 and x_position + 1 < map_width and game_map[y_position - 1][x_position + 1] == '0'
         bottom_right_free = y_position + 1 < map_height and x_position + 1 < map_width and game_map[y_position + 1][
@@ -57,26 +56,24 @@ class SceneryModel(object):
             x_position - 1] == '0'
 
         if bottom_left_free and not bottom_free and not left_free:
-            if bottom_free:
-                return '18'
+            # TODO Add variants
 
             return '18'
 
         if bottom_right_free and not bottom_free and not right_free:
-            if bottom_free:
-                return '9'
+            if left_free:
+                return '20'
 
             return '17'
 
         if top_right_free and not top_free and not right_free:
             if bottom_free:
-                return '9'
+                return '22'
 
             return '15'
 
         if top_left_free and not top_free and not left_free:
-            if bottom_free:
-                return '9'
+            # TODO Add variants
 
             return '16'
 
